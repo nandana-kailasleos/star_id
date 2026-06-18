@@ -1,36 +1,52 @@
 import numpy as np
-from config import KVECTOR_FILE, INDEX_FILE
+
+from config import (
+    KVECTOR_FILE,
+    INDEX_FILE,
+    K_ARRAY_FILE,
+    M_FILE,
+    Q_FILE
+)
 
 
 def search_angle(angle_deg, tolerance_deg=0.1):
 
-    # Load database
     star_pairs = np.load(KVECTOR_FILE, allow_pickle=True)
     angles_db = np.load(INDEX_FILE)
 
-    # Convert to radians
+    k = np.load(K_ARRAY_FILE)
+
+    m = float(np.load(M_FILE))
+    q = float(np.load(Q_FILE))
+
     angle = np.radians(angle_deg)
     tolerance = np.radians(tolerance_deg)
 
-    # Search interval
     lower = angle - tolerance
     upper = angle + tolerance
 
-    # Find matching range
-    left = np.searchsorted(angles_db, lower)
-    right = np.searchsorted(angles_db, upper)
+    jb = int(np.floor((lower - q) / m))
+    jt = int(np.ceil((upper - q) / m))
+
+    jb = max(0, jb)
+    jt = min(len(k) - 1, jt)
+
+    left = k[jb]
+    right = k[jt]
 
     matches = []
 
     for idx in range(left, right):
 
-        matches.append(
-            (
-                star_pairs[idx][0],
-                star_pairs[idx][1],
-                np.degrees(angles_db[idx])
+        if lower <= angles_db[idx] <= upper:
+
+            matches.append(
+                (
+                    star_pairs[idx][0],
+                    star_pairs[idx][1],
+                    np.degrees(angles_db[idx])
+                )
             )
-        )
 
     return matches
 

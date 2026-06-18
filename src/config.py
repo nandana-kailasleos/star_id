@@ -10,3 +10,7 @@ CACHE_FOV = "data/cache/fov_subset.npy"
 # FOV range you will use at runtime
 FOV_MIN = 2.0
 FOV_MAX = 5.0
+
+K_ARRAY_FILE = "data/processed/k_array.npy"
+M_FILE = "data/processed/m.npy"
+Q_FILE = "data/processed/q.npy"
