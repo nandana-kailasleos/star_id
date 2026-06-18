@@ -1,52 +1,59 @@
 import numpy as np
 from config import KVECTOR_FILE, INDEX_FILE
 
-def search_stars(observed_vectors):
 
-    print("Loading K-vector database...")
+def search_angle(angle_deg, tolerance_deg=0.1):
 
-    kvector = np.load(KVECTOR_FILE)
+    # Load database
+    star_pairs = np.load(KVECTOR_FILE, allow_pickle=True)
     angles_db = np.load(INDEX_FILE)
 
-    n = len(observed_vectors)
+    # Convert to radians
+    angle = np.radians(angle_deg)
+    tolerance = np.radians(tolerance_deg)
 
-    print("Observed stars:", n)
+    # Search interval
+    lower = angle - tolerance
+    upper = angle + tolerance
 
-    observed_angles = []
+    # Find matching range
+    left = np.searchsorted(angles_db, lower)
+    right = np.searchsorted(angles_db, upper)
 
-    # compute observed pair angles
-    for i in range(n):
-        for j in range(i + 1, n):
-
-            dot = np.dot(observed_vectors[i], observed_vectors[j])
-            dot = np.clip(dot, -1.0, 1.0)
-
-            angle = np.arccos(dot)
-            observed_angles.append(angle)
-
-    observed_angles = np.sort(np.array(observed_angles))
-
-    print("Matching with database...")
-
-    # simple matching (baseline version)
     matches = []
 
-    for angle in observed_angles:
-        idx = np.argmin(np.abs(angles_db - angle))
-        matches.append(idx)
+    for idx in range(left, right):
 
-    print("Matches found:", len(matches))
+        matches.append(
+            (
+                star_pairs[idx][0],
+                star_pairs[idx][1],
+                np.degrees(angles_db[idx])
+            )
+        )
 
     return matches
 
 
 if __name__ == "__main__":
 
-    # dummy test input (replace later with real camera stars)
-    test_vectors = np.array([
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1]
-    ])
+    angle_deg = float(input("Enter angle in degrees: "))
+    tolerance_deg = float(input("Enter tolerance in degrees: "))
 
-    search_stars(test_vectors)
+    matches = search_angle(angle_deg, tolerance_deg)
+
+    print("\nTotal matches found:", len(matches))
+
+    print("\nMatched star pairs:\n")
+
+    if len(matches) == 0:
+
+        print("No matches found.")
+
+    else:
+
+        for i, (star1, star2, ang) in enumerate(matches, start=1):
+
+            print(
+                f"{i}. {star1} <--> {star2}    angle = {ang:.6f} deg"
+            )
